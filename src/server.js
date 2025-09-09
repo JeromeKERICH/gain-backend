@@ -13,7 +13,7 @@ const app = express();
 
 // ✅ CORS setup for frontend only
 app.use(cors({
-  origin: ["https://gulfafricanexux.com"], 
+  origin: ["https://gulfafricanexus.com"], 
   methods: ["GET","POST","PUT","DELETE"],
   credentials: true
 }));
