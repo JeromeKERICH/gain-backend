@@ -9,44 +9,31 @@ const eventConfig = require("../config/eventConfig");
 const { processPaidOrder } = require("../services/orderProcessor");
 
 const router = express.Router();
-const nano = customAlphabet(
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-  10
-);
+const nano = customAlphabet("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", 10);
 
-// --- Helper: calculate total ---
+// Helper: calculate total from items
 function calcTotal(items) {
-  let total = 0;
-  items.forEach((it) => {
-    const t = eventConfig.ticketTypes.find((x) => x.code === it.type);
-    if (!t) throw new Error("Unknown ticket type " + it.type);
-    total += t.price * it.qty;
-  });
-  return total;
+  if (!items || items.length === 0) return 0;
+
+  const it = items[0]; // assume one ticket type per checkout
+  const t = eventConfig.ticketTypes.find((x) => x.code === it.type);
+  if (!t) throw new Error("Unknown ticket type " + it.type);
+
+  return t.price * it.qty;
 }
 
 // --- Initiate transaction ---
 router.post("/initiate-transaction", async (req, res, next) => {
   try {
-    const {
-      email,
-      fullName,
-      items,
-      successUrl,
-      cancelUrl,
-      phone,
-      country,
-      company,
-    } = req.body;
+    const { email, fullName, items, successUrl, cancelUrl, phone, country, company } = req.body;
 
     if (!email || !items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: "email and items required" });
     }
 
-    const total = calcTotal(items);
+    const total = calcTotal(items); // USD amount
     const orderRef = nano();
 
-    // persist pending order
     const order = await Order.create({
       orderRef,
       email,
@@ -55,17 +42,17 @@ router.post("/initiate-transaction", async (req, res, next) => {
       country,
       company,
       amount: total,
-      currency: eventConfig.currency,
+      currency: "USD",
       status: "PENDING",
       lineItems: items,
     });
 
-    // Paystack expects amount in kobo (or lowest denomination)
-    const amountKobo = total * 100;
+    // Paystack expects amount in kobo/cents (integer)
+    const amountCents = Math.round(total * 100);
 
     const payInit = await initTransaction({
       email,
-      amountKobo,
+      amount: amountCents,
       currency: "USD",
       reference: orderRef,
       callback_url: successUrl || process.env.FRONTEND_URL + "/payment-callback",
@@ -80,15 +67,14 @@ router.post("/initiate-transaction", async (req, res, next) => {
   }
 });
 
-// --- Verify payment (frontend callback) ---
+// --- Verify payment ---
 router.post("/verify-payment", async (req, res, next) => {
   try {
     const { reference } = req.body;
-    if (!reference)
-      return res.status(400).json({ error: "reference required" });
+    if (!reference) return res.status(400).json({ error: "reference required" });
 
     const verification = await verifyTransaction(reference);
-    const status = verification.status; // "success" expected
+    const status = verification.status;
     const payRef = verification.reference;
 
     const order = await Order.findOne({ orderRef: reference });
@@ -99,7 +85,7 @@ router.post("/verify-payment", async (req, res, next) => {
       order.paystackRef = payRef;
       await order.save();
 
-      await processPaidOrder(order); // mint tickets + send emails
+      await processPaidOrder(order);
     }
 
     res.json({
@@ -118,7 +104,6 @@ router.post("/webhook", async (req, res) => {
     const signature = req.headers["x-paystack-signature"] || "";
     const secret = process.env.PAYSTACK_SECRET_KEY || "";
 
-    // rawBody was set in express.json() middleware in server.js
     const computed = crypto
       .createHmac("sha512", secret)
       .update(req.rawBody)

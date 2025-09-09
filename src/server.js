@@ -7,13 +7,14 @@ const authRoutes = require("./routes/auth");
 const paymentRoutes = require("./routes/paymentsRoutes");
 const ticketRoutes = require("./routes/ticketsRoutes");
 const errorHandler = require("./middlewares/errorHandler");
+const contactRoutes = require("./routes/contactRoutes");
 
 const app = express();
 
 // ✅ CORS setup for frontend only
 app.use(cors({
-  origin: process.env.FRONTEND_URL, // e.g., https://yourfrontend.com
-  methods: ["GET", "POST"],
+  origin: ["https://gulfafricanexux.com"], 
+  methods: ["GET","POST","PUT","DELETE"],
   credentials: true
 }));
 
@@ -22,6 +23,9 @@ app.use("/api/payments/webhook", express.raw({ type: "*/*" }));
 
 // ✅ JSON parser for other endpoints
 app.use(express.json());
+
+// --- Contact form route
+app.use("/api/contact", contactRoutes);
 
 // --- Health check
 app.get("/", (req, res) => res.send("GAIN API running 🚀"));
