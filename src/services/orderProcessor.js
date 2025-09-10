@@ -34,7 +34,7 @@ async function processPaidOrder(order) {
     
     console.log(`✅ Order processed and emails sent for ${order.orderRef}`);
   } catch (error) {
-    console.error(`❌ Error processing order ${order.orderRef}:`, error);
+    console.error(`Error processing order ${order.orderRef}:`, error);
     throw error;
   }
 }

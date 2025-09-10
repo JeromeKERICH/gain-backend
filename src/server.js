@@ -11,9 +11,19 @@ const contactRoutes = require("./routes/contactRoutes");
 
 const app = express();
 
-// ✅ CORS setup for frontend only
+
+// ✅ CORS configuration
+const allowedOrigins = [
+  "https://gulfafricanexus.com" 
+];
+
 app.use(cors({
-  origin: ["https://gulfafricanexus.com"], 
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("Not allowed by CORS"));
+  },
   methods: ["GET","POST","PUT","DELETE"],
   credentials: true
 }));
