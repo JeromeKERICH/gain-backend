@@ -11,7 +11,7 @@ async function initTransaction({ email, amount, currency, reference, callback_ur
       amount,         // ✅ must be named "amount"
       currency,       // "USD" works if enabled on your account
       reference,
-      callback_url,
+      callback_url: `${process.env.FRONTEND_URL}/payment-callback`,
     },
     {
       headers: {
