@@ -12,9 +12,8 @@ const contactRoutes = require("./routes/contactRoutes");
 const app = express();
 
 
-// ✅ CORS configuration
 const allowedOrigins = [
-  "https://gulfafricanexus.com" 
+  process.env.FRONTEND_URL, 
 ];
 
 app.use(cors({
@@ -28,10 +27,10 @@ app.use(cors({
   credentials: true
 }));
 
-// ✅ Raw body parser for webhooks (Paystack needs raw body)
+// Raw body parser for webhooks (Paystack needs raw body)
 app.use("/api/payments/webhook", express.raw({ type: "*/*" }));
 
-// ✅ JSON parser for other endpoints
+// JSON parser for other endpoints
 app.use(express.json());
 
 // --- Contact form route
