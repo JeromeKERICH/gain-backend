@@ -8,6 +8,7 @@ const paymentRoutes = require("./routes/paymentsRoutes");
 const ticketRoutes = require("./routes/ticketsRoutes");
 const errorHandler = require("./middlewares/errorHandler");
 const contactRoutes = require("./routes/contactRoutes");
+const contactSalesRoute = require("./routes/contactSalesRoutes");
 
 const app = express();
 
@@ -35,6 +36,9 @@ app.use(express.json());
 
 // --- Contact form route
 app.use("/api/contact", contactRoutes);
+
+// --- Contact sales route
+app.use("/api/contact-sales", contactSalesRoute);
 
 // --- Health check
 app.get("/", (req, res) => res.send("GAIN API running 🚀"));
